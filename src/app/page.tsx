@@ -1,28 +1,46 @@
 "use client";
 
-import { UserButton } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import Sidebar from "@/components/chat/Sidebar";
+import { Id } from "../../convex/_generated/dataModel";
+import { MessageSquare } from "lucide-react";
 
 export default function Home() {
+  const [selectedConversation, setSelectedConversation] =
+    useState<Id<"conversations"> | null>(null);
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background p-8">
-      <div className="absolute top-4 right-4">
-        <UserButton afterSignOutUrl="/sign-in" />
-      </div>
+    <div className="flex h-screen bg-background">
+      {/* Sidebar */}
+      <Sidebar
+        selectedConversation={selectedConversation}
+        onConversationSelect={setSelectedConversation}
+      />
 
-      <h1 className="text-4xl font-bold tracking-tight text-foreground">
-        🚀 ChatApp
-      </h1>
-      <p className="max-w-md text-center text-muted-foreground">
-        Real-time messaging powered by Next.js, Convex &amp; Clerk.
-        <br />
-        Phase 1 setup complete — ready for Phase 2!
-      </p>
-
-      <div className="flex gap-3">
-        <Button>Primary Button</Button>
-        <Button variant="secondary">Secondary</Button>
-        <Button variant="outline">Outline</Button>
+      {/* Main content area */}
+      <div className="flex flex-1 flex-col items-center justify-center bg-muted/20">
+        {!selectedConversation ? (
+          <div className="flex flex-col items-center gap-4 text-center px-8">
+            <div className="rounded-3xl bg-primary/5 p-6">
+              <MessageSquare className="h-16 w-16 text-primary/40" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-foreground">
+                Welcome to ChatApp
+              </h2>
+              <p className="mt-1.5 text-sm text-muted-foreground max-w-sm">
+                Select a conversation from the sidebar or start a new chat
+                to begin messaging in real-time.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-3 text-muted-foreground">
+            <p className="text-sm">
+              Chat view coming in Phase 5 ✨
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
