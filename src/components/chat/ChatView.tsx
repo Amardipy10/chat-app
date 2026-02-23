@@ -3,7 +3,7 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
@@ -18,9 +18,18 @@ interface ChatViewProps {
 export default function ChatView({ conversationId, onBack }: ChatViewProps) {
   const currentUser = useQuery(api.users.getCurrentUser);
   const setPresence = useMutation(api.presence.setPresence);
+  const markAsRead = useMutation(api.messages.markAsRead);
 
   // Manage online/offline lifecycle
   usePresence();
+
+  // Mark messages as read when conversation opens and when new messages arrive
+  const messages = useQuery(api.messages.getMessages, { conversationId });
+  useEffect(() => {
+    if (conversationId && messages) {
+      markAsRead({ conversationId }).catch(() => {});
+    }
+  }, [conversationId, messages?.length, markAsRead]);
 
   // Get conversation to find other participant
   const conversation = useQuery(api.conversations.getConversation, {

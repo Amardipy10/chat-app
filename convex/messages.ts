@@ -75,3 +75,77 @@ export const getMessages = query({
     return enriched;
   },
 });
+
+/**
+ * Mark all messages in a conversation as read by the current user.
+ * Updates the `seenBy` array on each unseen message.
+ */
+export const markAsRead = mutation({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return;
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) return;
+
+    // Get all unread messages in this conversation
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_conversationId", (q) =>
+        q.eq("conversationId", args.conversationId)
+      )
+      .collect();
+
+    // Patch only messages not yet seen by this user
+    const unread = messages.filter(
+      (msg) => !msg.seenBy.includes(currentUser._id)
+    );
+
+    await Promise.all(
+      unread.map((msg) =>
+        ctx.db.patch(msg._id, {
+          seenBy: [...msg.seenBy, currentUser._id],
+        })
+      )
+    );
+
+    return unread.length;
+  },
+});
+
+/**
+ * Get unread message count for a conversation (for the current user).
+ * Reactive — updates in real-time as messages are sent or marked read.
+ */
+export const getUnreadCount = query({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return 0;
+
+    const currentUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+
+    if (!currentUser) return 0;
+
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_conversationId", (q) =>
+        q.eq("conversationId", args.conversationId)
+      )
+      .collect();
+
+    return messages.filter(
+      (msg) =>
+        msg.senderId !== currentUser._id &&
+        !msg.seenBy.includes(currentUser._id)
+    ).length;
+  },
+});
