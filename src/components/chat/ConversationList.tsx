@@ -32,7 +32,7 @@ function ConversationItem({
       username: string;
       imageUrl: string;
       isOnline: boolean;
-    }>;
+    } | null>;
   };
   currentUserId: string | undefined;
   isSelected: boolean;
@@ -43,7 +43,7 @@ function ConversationItem({
     useQuery(api.messages.getUnreadCount, { conversationId: conv._id }) ?? 0;
 
   const otherParticipant = conv.participantDetails?.find(
-    (p) => p._id !== currentUserId
+    (p) => p != null && p._id !== currentUserId
   );
 
   const displayName = conv.isGroup

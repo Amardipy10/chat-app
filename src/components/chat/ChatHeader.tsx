@@ -24,7 +24,7 @@ export default function ChatHeader({
 
   // Get the other participant's ID for presence lookup
   const otherParticipantId = conversation?.participantDetails?.find(
-    (p: { _id: string }) => p._id !== currentUser?._id
+    (p) => p != null && p._id !== currentUser?._id
   )?._id as Id<"users"> | undefined;
 
   // Subscribe to the other user's presence (real-time)
@@ -42,7 +42,7 @@ export default function ChatHeader({
   }
 
   const otherParticipant = conversation.participantDetails?.find(
-    (p: { _id: string }) => p._id !== currentUser._id
+    (p) => p != null && p._id !== currentUser._id
   );
 
   const displayName = conversation.isGroup

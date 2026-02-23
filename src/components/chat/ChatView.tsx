@@ -38,7 +38,7 @@ export default function ChatView({ conversationId, onBack }: ChatViewProps) {
 
   // Find the other participant's ID
   const otherParticipantId = conversation?.participantDetails?.find(
-    (p: { _id: string }) => p._id !== currentUser?._id
+    (p) => p != null && p._id !== currentUser?._id
   )?._id as Id<"users"> | undefined;
 
   // Subscribe to other user's presence for typing indicator below messages
@@ -48,7 +48,7 @@ export default function ChatView({ conversationId, onBack }: ChatViewProps) {
   );
 
   const otherUser = conversation?.participantDetails?.find(
-    (p: { _id: string }) => p._id !== currentUser?._id
+    (p) => p != null && p._id !== currentUser?._id
   );
 
   const isOtherTyping =
