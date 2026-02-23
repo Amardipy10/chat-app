@@ -6,6 +6,7 @@ import { Id } from "../../../convex/_generated/dataModel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, Phone, Video, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatDistanceToNow } from "@/lib/formatTime";
 
 interface ChatHeaderProps {
   conversationId: Id<"conversations">;
@@ -20,6 +21,17 @@ export default function ChatHeader({
     conversationId,
   });
   const currentUser = useQuery(api.users.getCurrentUser);
+
+  // Get the other participant's ID for presence lookup
+  const otherParticipantId = conversation?.participantDetails?.find(
+    (p: { _id: string }) => p._id !== currentUser?._id
+  )?._id as Id<"users"> | undefined;
+
+  // Subscribe to the other user's presence (real-time)
+  const otherPresence = useQuery(
+    api.presence.getPresence,
+    otherParticipantId ? { userId: otherParticipantId } : "skip"
+  );
 
   if (!conversation || !currentUser) {
     return (
@@ -41,7 +53,20 @@ export default function ChatHeader({
     ? conversation.groupImage
     : otherParticipant?.imageUrl;
 
-  const isOnline = !conversation.isGroup && otherParticipant?.isOnline;
+  const isOnline = otherPresence?.isOnline ?? otherParticipant?.isOnline ?? false;
+  const isTyping =
+    otherPresence?.isTyping &&
+    otherPresence?.typingInConversation === conversationId;
+
+  // Build status text
+  const getStatusText = () => {
+    if (isTyping) return null; // handled separately with animation
+    if (isOnline) return <span className="text-emerald-500 font-medium">Online</span>;
+    if (otherPresence?.lastSeen) {
+      return `Last seen ${formatDistanceToNow(otherPresence.lastSeen)} ago`;
+    }
+    return "Offline";
+  };
 
   return (
     <div className="flex h-16 items-center justify-between border-b border-border/50 px-4 bg-card/50 backdrop-blur-sm">
@@ -71,13 +96,20 @@ export default function ChatHeader({
           <h2 className="text-sm font-semibold text-foreground leading-tight">
             {displayName}
           </h2>
-          <p className="text-[11px] text-muted-foreground">
-            {isOnline ? (
-              <span className="text-emerald-500 font-medium">Online</span>
+          <div className="text-[11px] text-muted-foreground h-4">
+            {isTyping ? (
+              <span className="text-primary font-medium flex items-center gap-1">
+                typing
+                <span className="flex gap-0.5">
+                  <span className="inline-block h-1 w-1 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms", animationDuration: "1s" }} />
+                  <span className="inline-block h-1 w-1 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms", animationDuration: "1s" }} />
+                  <span className="inline-block h-1 w-1 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms", animationDuration: "1s" }} />
+                </span>
+              </span>
             ) : (
-              "Offline"
+              getStatusText()
             )}
-          </p>
+          </div>
         </div>
       </div>
 

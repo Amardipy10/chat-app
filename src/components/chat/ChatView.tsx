@@ -7,6 +7,8 @@ import { useCallback } from "react";
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
+import TypingIndicator from "./TypingIndicator";
+import { usePresence } from "@/hooks/usePresence";
 
 interface ChatViewProps {
   conversationId: Id<"conversations">;
@@ -16,6 +18,33 @@ interface ChatViewProps {
 export default function ChatView({ conversationId, onBack }: ChatViewProps) {
   const currentUser = useQuery(api.users.getCurrentUser);
   const setPresence = useMutation(api.presence.setPresence);
+
+  // Manage online/offline lifecycle
+  usePresence();
+
+  // Get conversation to find other participant
+  const conversation = useQuery(api.conversations.getConversation, {
+    conversationId,
+  });
+
+  // Find the other participant's ID
+  const otherParticipantId = conversation?.participantDetails?.find(
+    (p: { _id: string }) => p._id !== currentUser?._id
+  )?._id as Id<"users"> | undefined;
+
+  // Subscribe to other user's presence for typing indicator below messages
+  const otherPresence = useQuery(
+    api.presence.getPresence,
+    otherParticipantId ? { userId: otherParticipantId } : "skip"
+  );
+
+  const otherUser = conversation?.participantDetails?.find(
+    (p: { _id: string }) => p._id !== currentUser?._id
+  );
+
+  const isOtherTyping =
+    otherPresence?.isTyping &&
+    otherPresence?.typingInConversation === conversationId;
 
   const handleTyping = useCallback(
     (isTyping: boolean) => {
@@ -48,6 +77,9 @@ export default function ChatView({ conversationId, onBack }: ChatViewProps) {
         conversationId={conversationId}
         currentUserId={currentUser._id}
       />
+      {isOtherTyping && (
+        <TypingIndicator username={otherUser?.username} />
+      )}
       <MessageInput
         conversationId={conversationId}
         onTyping={handleTyping}
