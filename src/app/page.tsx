@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Sidebar from "@/components/chat/Sidebar";
+import ChatView from "@/components/chat/ChatView";
 import { Id } from "../../convex/_generated/dataModel";
 import { MessageSquare } from "lucide-react";
 
@@ -18,28 +19,29 @@ export default function Home() {
       />
 
       {/* Main content area */}
-      <div className="flex flex-1 flex-col items-center justify-center bg-muted/20">
+      <div className="flex flex-1 flex-col bg-muted/20">
         {!selectedConversation ? (
-          <div className="flex flex-col items-center gap-4 text-center px-8">
-            <div className="rounded-3xl bg-primary/5 p-6">
-              <MessageSquare className="h-16 w-16 text-primary/40" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-foreground">
-                Welcome to ChatApp
-              </h2>
-              <p className="mt-1.5 text-sm text-muted-foreground max-w-sm">
-                Select a conversation from the sidebar or start a new chat
-                to begin messaging in real-time.
-              </p>
+          <div className="flex flex-1 flex-col items-center justify-center px-8">
+            <div className="flex flex-col items-center gap-4 text-center">
+              <div className="rounded-3xl bg-primary/5 p-6">
+                <MessageSquare className="h-16 w-16 text-primary/40" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-foreground">
+                  Welcome to ChatApp
+                </h2>
+                <p className="mt-1.5 text-sm text-muted-foreground max-w-sm">
+                  Select a conversation from the sidebar or start a new chat
+                  to begin messaging in real-time.
+                </p>
+              </div>
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-3 text-muted-foreground">
-            <p className="text-sm">
-              Chat view coming in Phase 5 ✨
-            </p>
-          </div>
+          <ChatView
+            conversationId={selectedConversation}
+            onBack={() => setSelectedConversation(null)}
+          />
         )}
       </div>
     </div>
